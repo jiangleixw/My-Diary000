@@ -1,13 +1,13 @@
 name: Build Android APK
 on:
   push:
-    branches: [ main ]  # 只在 main 分支推送时触发
+    branches: [ master ]  # 监听 master 分支的推送
   pull_request:
-    branches: [ main ]  # 也可在 PR 时触发
+    branches: [ master ]  # 可选：PR 时也触发
 
 jobs:
   build:
-    runs-on: ubuntu-latest  # 使用 GitHub 提供的 Ubuntu 虚拟机
+    runs-on: ubuntu-latest
     steps:
       # 1. 拉取代码
       - name: Checkout code
@@ -18,17 +18,20 @@ jobs:
         uses: actions/setup-java@v3
         with:
           java-version: '17'
-          distribution: 'temurin'  # 使用 Eclipse Temurin JDK
+          distribution: 'temurin'
 
-      # 3. 构建 APK（Release 版）
-      - name: Build Release APK
-        run: |
-          chmod +x gradlew
-          ./gradlew assembleRelease
+      # 3. 赋予 gradlew 执行权限
+      - name: Make gradlew executable
+        run: chmod +x gradlew
 
-      # 4. 上传 APK 作为构建产物（Artifact）
+      # 4. 构建 Release APK
+      - name: Build APK
+        run: ./gradlew assembleRelease
+
+      # 5. 上传 APK 作为产物
       - name: Upload APK
         uses: actions/upload-artifact@v3
         with:
           name: app-release
-          path: app/build/outputs/apk/release/
+          path: app/build/outputs/apk/release/app-release.apk  # 精确路径
+          retention-days: 7  # 自动清理旧构建
