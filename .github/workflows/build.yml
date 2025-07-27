@@ -14,19 +14,27 @@ jobs:
 
       - run: chmod +x gradlew
 
-      - name: Build with debug info
+      - name: Build with strict checking
         run: |
+          # 强制构建失败时退出
           ./gradlew assembleRelease \
             --no-daemon \
             --stacktrace \
-            --info || exit 1  # 明确失败时退出
-
-      - name: List build outputs  # 调试用
-        run: find app/build/outputs -name "*.apk"
+            --info \
+            || exit 1
+          
+          # 验证APK存在
+          APK_PATH=$(find app/build/outputs/apk -name "*.apk" | head -1)
+          if [ -z "$APK_PATH" ]; then
+            echo "::error::No APK found in app/build/outputs/apk/"
+            exit 1
+          else
+            echo "APK found at: $APK_PATH"
+          fi
 
       - uses: actions/upload-artifact@v4
-        if: success()  # 仅在之前步骤成功时运行
         with:
           name: app-release
           path: app/build/outputs/apk/**/*.apk
+          if-no-files-found: error  # 无文件时报错
           retention-days: 3
